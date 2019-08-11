@@ -1,0 +1,389 @@
+---
+title: "bilingual R Markdown"
+author: "theophano mitsa"
+date: "August 1, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+  library(reticulate)
+use_python("C:/Users/Theo/Anaconda3/python.exe")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Discover the Python that will be used
+```{r}
+py_discover_config()
+```
+1. DATAFRAME CREATION, SUMMARIZATION
+
+a. Read a dataframe from scratch
+IN R
+
+```{r}
+library(tidyverse)
+set.seed(3)
+mat1<-matrix(rnorm(6,12,3), nrow=2)
+dimnames(mat1)=list(c("dep1","dep2"),c("Tom","Jim","Sam"))
+DepositFrame=as.data.frame(mat1)
+print(DepositFrame)
+
+```
+
+IN PYTHON
+
+```{python}
+import numpy as np
+import pandas as pd
+ChildAgeFrame = pd.DataFrame(np.array(([15, 0],[69,3], [35, 2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+print(ChildAgeFrame)
+ChildAgeFrame.describe()
+#Print the Tes column
+print(ChildAgeFrame.loc['Tes'])
+#Alternate way to create a DataFrame
+HotelFrame = pd.DataFrame({'Room Type': ['Regular','Suite', 'Regular','Lux Suite','Suite'],'Floor':['1','2','3','3','2']})
+print(HotelFrame)
+```
+b. Read a dataframe from a csv file
+
+IN R
+```{r}
+heart_R<-read.csv("heart.csv",header=TRUE, fileEncoding="UTF-8-BOM")
+#print dimensions
+dim(heart_R)
+#print names of columns
+names(heart_R)
+```
+
+IN PYTHON
+```{python}
+import pandas as pd
+heart_P=pd.read_csv('heart.csv')
+#read only certain columns from a csv file
+drop_cols=['thal','thalach']
+heart_Pr=pd.read_csv('heart.csv',usecols=lambda cc : cc not in drop_cols, index_col=False)
+#print dimensions
+print(heart_P.shape)
+#print names of columns
+print(heart_P.columns)
+```
+
+c. Data Summarization
+
+In R
+```{r}
+#print first rows
+head(heart_R)
+#Print some basic info about the dataframe
+glimpse(heart_R)
+str(heart_R)
+summary(heart_R)
+#Alternate way to summarize variables
+library(prettyR)
+describe(heart_R)
+#sort according to cholesterol
+heart_R%>% arrange(chol)%>%head()
+#Use tapply() to group and compute functions within groups
+tapply(heart_R$chol,heart_R$sex,mean)
+#compute the mean after grouping with group_by()
+heart_R%>%group_by(sex)%>%summarise_all(~mean(.,na.rm=TRUE))
+#Compute counts of groups
+heart_R%>%count(sex)
+heart_R%>%count(cp,sort=TRUE)
+heart_R%>%count(cp,fbs, sort=TRUE)
+
+```
+In Python
+
+```{python}
+import pandas as pd
+heart_P=pd.read_csv('heart.csv')
+#print first rows
+print(heart_P.head(5))
+#Print some basic info about the dataframe
+heart_P.describe()
+#Count grouped cases
+heart_P.groupby('fbs').count()
+#Count the mean of grouped cases
+heart_P.groupby(['sex','fbs']).count()
+heart_P.groupby(['sex','fbs']).mean()
+```
+
+
+2. INDEX-BASED SELECTION: SELECT ROWS,COLUMNS, ELEMENTS USING INDICES
+
+IN R
+```{r}
+#Print first row
+print(DepositFrame[1,])
+#Print first column
+print(DepositFrame[,1])
+#Print first element
+DepositFrame[1,1]
+```
+IN PYTHON
+
+```{python}
+import numpy as np
+import pandas as pd
+ChildAgeFrame = pd.DataFrame(np.array(([15, 0], [69, 3],[35, 2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+#Select first row. Returns Series.
+print(ChildAgeFrame.iloc[0])
+#Select first row. Returns Dataframe.
+print(ChildAgeFrame.iloc[[0]])
+#Select first column
+print(ChildAgeFrame.iloc[:,0])
+#Select last column
+print(ChildAgeFrame.iloc[:,-1])
+#Select first element
+print(ChildAgeFrame.iloc[0,0])
+#Select first 2 rows
+print(ChildAgeFrame.iloc[0:2])
+#Select first 2 columns
+print(ChildAgeFrame.iloc[:,0:2])
+
+```
+3.NON-INDEX-BASED SELECTION
+
+a. Column Selection Using Column Names
+
+IN R
+```{r}
+#selecting a single column in basic R
+DepositFrame["Tom"]
+#selecting a multitude of columns using select()
+DepositFrame%>%select("Tom","Sam")
+```
+
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+ChildAgeFrame = pd.DataFrame(np.array(([15, 0], [69, 3], [35,2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+
+print(ChildAgeFrame[['age']])
+```
+
+b.Column Selection Using Regular Expressions, Logical Conditions
+
+IN R
+```{r}
+#Filter using regex
+ DepositFrame%>%select(matches("S.+m"))%>%glimpse()
+#Filter based on a logical expression
+DepositFrame %>% select(matches("m"))%>%
+  select_if(~max(.,na.rm=TRUE)<12)%>%glimpse()
+```
+
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+ChildAgeFrame = pd.DataFrame(np.array(([15, 0], [69, 3], [39,2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+Child_select=ChildAgeFrame.filter(regex='a.+e',axis=1)
+print(Child_select)
+```
+
+3.c Non-Index-Based Row Selection: With Logical Expressions EXPRESSIONS And/Or Row Names
+
+IN R
+```{r}
+#Print the age of men with high cholesterol
+#With basic R
+MEN_WITH_HIGH_CHOL<-heart_R$chol > 280 & heart_R$sex==1
+print(heart_R[MEN_WITH_HIGH_CHOL,1])
+#with dplyr
+filtered<-filter(heart_R,chol > 280 & sex==1)
+print(filtered[1])
+#print any rows that contain a value greater than 280
+heart_n<-heart_R%>%filter_all(any_vars(.>280))
+print(heart_n)
+```
+
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+#Select row using logical condition
+heart_P=pd.read_csv('heart.csv')
+df=heart_P[(heart_P['chol']> 200) & (heart_P['thalach']==178)]
+print(df)
+
+#Select row using row name
+dfnew = pd.DataFrame(np.array(([15,0], [69,3],[35,2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+print(dfnew.loc['Linda'])
+```
+
+4. DELETE COLUMNS/ROWS
+
+
+IN R
+```{r}
+#Delete using column name
+print(DepositFrame)
+Depnew<-DepositFrame%>%select(-c("Sam"))
+Depnew
+#Delete using starts_with.
+Depnew<-DepositFrame%>%select(-starts_with("J"))
+Depnew
+#Delete row
+set.seed(3)
+mat1<-matrix(rnorm(6,12,3), nrow=2)
+dimnames(mat1)=list(c("dep1","dep2"),c("Tom","Jim","Sam"))
+mat1
+df=as.data.frame(mat1)
+names<-rownames(df)
+names
+todrop=names[1]
+todrop
+df2<-df[!(rownames(df)%in%todrop),]
+print(df2)
+
+
+```
+
+
+IN PYTHON
+
+```{python}
+import pandas as pd
+HotelFrame = pd.DataFrame({'Room Type': ['Regular','Suite', 'Regular','Lux Suite','Suite'],'Floor':['1','2','3','3','2']})
+#Delete a column using its name
+Hotelnew=HotelFrame.drop('Floor', axis=1)
+print(Hotelnew)
+
+#Alternate way
+Hotelnew=HotelFrame.drop(columns=['Floor'],axis=1)
+print(Hotelnew)
+
+#Delete Row
+Hotelnew=HotelFrame.drop([0])
+print(Hotelnew)
+```
+5. ADD ROW/ COLUMN 
+
+IN R
+```{r}
+#ADD COLUMN
+DepositFrame$Brandon<-c(9,12)
+#Using mutate, transmute. Transmute only keeps the new vars
+dfnew<-mutate(DepositFrame,sumdep=Tom+Jim, Sam=NULL)
+print(dfnew)
+#ADD ROW
+addit_row<-data.frame('Tom'=11.0, 'Jim'=12.2,'Sam'=10.2,'Brandon'=11.3)
+df2<-rbind(DepositFrame,addit_row)
+df2
+#Combine group by and mutate to do calculations within groups.
+
+heart_Rn<-heart_R%>% group_by(sex)%>%mutate(chol_n=chol/mean(chol,na.rm=TRUE))
+print(heart_Rn)
+
+```
+
+
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+HotelFrame = pd.DataFrame({'Room Type': ['Regular','Suite', 'Regular','Lux Suite','Suite'],'Floor':['1','2','3','3','2']})
+pets=['No','Yes','No','No','Yes']
+HotelFrame['pet']=pets
+#Using a map to implement logic
+pets_allowed={'Regular':'No','Suite':'Yes','Lux Suite':'No'}
+#Add column using the above map
+HotelFrame['PETS']=HotelFrame['Room Type'].map(pets_allowed)
+#ADD a ROW
+dfadd=HotelFrame.append({'Room Type':'Regular','Floor':'1',
+'pet':'No','PETS':'No'}, ignore_index=True)
+print(dfadd)
+```
+
+6. APPLY A FUNCTION TO ROWS/COLUMNS OF A DATAFRAME
+
+IN R
+```{r}
+#Compute mean over columns
+apply(DepositFrame,2,mean)
+#Compute mean over rows
+apply(DepositFrame,1,mean)
+```
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+ChildAgeFrame = pd.DataFrame(np.array(([15, 0], [69,3],[35,2])),
+               columns=['age', 'children'],                                 index=['Tes', 'Linda', 'Kate'])
+#Compute the mean of the columns
+print(ChildAgeFrame.apply(np.mean,axis=0))
+#Apply a lambda function to all elements
+print(ChildAgeFrame.apply(lambda x: x*5))
+
+```
+
+7. SAMPLING A DATAFRAME
+
+IN R
+```{r}
+set.seed(5)
+#Sample 3 rows without replacement
+heart_R %>% sample_n(3, replace = FALSE)
+
+# Sample 1% of rows, without replacement
+heart_R %>% sample_frac(0.01, replace = FALSE)
+```
+
+IN PYTHON
+```{python}
+import numpy as np
+import pandas as pd
+heart_P=pd.read_csv('heart.csv')
+s1=heart_P.sample(n=3)
+s2=heart_P.sample(frac=0.01)
+```
+
+8. COMPARE DATA LOADING BETWEEN DATA.TABLE AND DATAFRAME
+
+```{r}
+library(data.table)
+system.time(student1<-read.csv("student_data.csv",header=TRUE, fileEncoding="UTF-8-BOM"))
+system.time(student2<-fread("student_data.csv"))
+
+```
+
+9. COMPARE FILTERING IN DPLYR AND DATA.TABLE
+```{r}
+library(data.table)
+heart_RDT=fread("heart.csv",header=TRUE)
+ff<-heart_R%>%filter(chol > 280 & sex==1)
+#Mean age of men with chol > 280
+mean(ff[,1])
+#Mean age computed from a data.table
+dd<-heart_RDT[chol > 280 & sex==1,.(mm=mean(age))]
+dd
+```
+
+10. IMPLEMENT/COMPARE PARALLELIZATION/ FUNCTION COMPILATION
+```{r}
+library(parallel)
+library(compiler)
+k<-detectCores()
+c1<-makeCluster(4)
+mysquare<-function(num){return(num^2)}
+#Compile the function
+gb<-cmpfun(mysquare)
+set.seed(2)
+sample_numbers <- sample(10000000, 10000000)
+system.time(sapply(sample_numbers,mysquare))
+system.time(sapply(sample_numbers,gb))
+system.time(parSapply(c1,sample_numbers, mysquare))
+system.time(parSapply(c1,sample_numbers, gb))
+stopCluster(c1)
+
+```
+
+
