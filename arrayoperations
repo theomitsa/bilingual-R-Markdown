@@ -1,0 +1,221 @@
+---
+title: "pythonandR array operations"
+author: "Theophano Mitsa"
+date: "August 1, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+  library(reticulate)
+use_python("C:/Users/Theo/Anaconda3/python.exe")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Discover the Python that will be used
+```{r}
+py_discover_config()
+```
+
+
+1-D Vectors and type in R
+
+```{r }
+
+a1<-c(1,3,4)
+a1
+typeof(a1)
+```
+
+
+```{python}
+import numpy as np
+a=np.array([1,3,4])
+print(type(a))
+```
+A zero vector and array in R
+```{r}
+a0<-vector("numeric",7)
+a0
+a00<-array(0,dim=c(2,3))
+a00
+```
+A zero array in Python
+```{python}
+import numpy as np
+a=np.zeros((2,3))
+print(a)
+```
+A sequence in R
+```{r}
+s=seq(1,10,2)
+s
+s1<-1:5
+names(s1)<-c("cat","frog","dog","bird","ant")
+s1
+```
+
+A sequence in Python
+```{python}
+import numpy as np
+s=np.arange(1,10,2)
+print(s)
+s2=np.linspace(0,100,20)
+print(s2)
+```
+Accesing an array in R
+```{r}
+#Note array indices in R start at 1
+a<-c(5,4,2,2,5)
+a[1]
+
+```
+Accesing an array in Python
+```{python}
+#NOTE HERE INDICES START AT 0
+a=[23,34,49,12,11]
+print(type(a))
+print(a[0])
+import numpy as np
+b=np.array([12,23,19,34])
+print(b[0])
+```
+2-D array and matrix creation in r
+NOTE: THERE IS NO DIFFERENCE BETWEEN A 2-D ARRAY AND MATRIX IN R
+
+```{r}
+set.seed(3)
+arr4<-array(c(1,2,4,9,10,3), dim=c(2,3))
+arr4
+arr1<-array(rnorm(6,12,3),dim=c(2,3))
+mat11<-matrix(c(2,9,5,3,9,10,1,4,10),nrow=3)
+dimnames(arr1)=list(c("dep1","dep2"),c("Tom","Jim","Sam"))
+arr1
+
+set.seed(3)
+mat1<-matrix(rnorm(6,12,3), nrow=2)
+dimnames(mat1)=list(c("dep1","dep2"),c("Tom","Jim","Sam"))
+mat1
+identical(arr1,mat1)
+
+```
+
+
+Now let's try 2-D arrays in Python
+```{python}
+import numpy as np
+
+b=np.array([(3,2,1),(1,3,4)])
+print(b)
+```
+Reshape a matrix in R
+```{r}
+library(pracma)
+mat11<-matrix(c(2,9,5,3,9,10),nrow=3)
+print(mat11)
+mat2<-Reshape(mat11,2,3)
+print(mat2)
+```
+
+Reshaping-copying-creating a view of an array in Python
+```{python}
+import numpy as np
+x=np.arange(1,5)
+print(x)
+a=np.array([(10,20,30),(5,6,7)])
+g=a.reshape(3,-1)
+print(g)
+#Create a copy
+xx=x
+xx is x
+#Create a view
+xv=x.view()
+xv is x
+```
+
+Mathematical functions with arrays and matrices in R
+```{r}
+
+am=matrix(c(1,9,16,25),nrow=2)
+ams=sqrt(am)
+print(am[,1])
+print(ams)
+l=sum(am)
+print(l)
+mm=rowMeans(am)
+print(mm)
+msa=rowSums(am)
+mc=colMeans(am)
+mcs=colSums(am)
+```
+
+
+Mathematical functions with arrays in Python
+```{python}
+import numpy as np
+a=np.array([(10,20,30),(5,6,7)])
+c=np.sqrt(a)
+s=a.sum()
+max=a.max()
+print(s)
+print(max)
+k=a.argmax()
+sr=a.sum(axis=0)
+mr=a.mean(axis=0)
+print(a[...,0])
+```
+
+Matrix algebra in R
+```{r}
+mat1=matrix(c(3,2,1,1,3,4,10,30,20),nrow=3)
+MT=t(mat1)
+MI=solve(mat1)
+#DOT PRODUCT
+PR=mat1%*%MI
+print(PR)
+# Element by element multipl
+C=mat1*MT
+#Eigen values and eigenvectors
+y=eigen(mat1)
+#eigen values
+print(y$val)
+
+```
+Matrix algebra in Python, which is implemented using numpy arrays
+```{python}
+
+import numpy as np
+
+b=np.array([(3,2,1),(1,3,4),(10,30,20)])
+c=b.T
+d=np.linalg.inv(b)
+print(c)
+print(d)
+e=b.dot(d)
+print(e)
+
+```
+
+
+Sample in R
+```{r}
+set.seed(5)
+sample(1:30, 6, replace=TRUE)
+```
+Sample in Python
+```{python}
+import numpy as np
+import random
+ar0=np.arange(1,10,1)
+ar0list=ar0.tolist()
+#WITH REPLACEMENT
+random.seed(3)
+print ("choosing 7 random items from a sequence with replacement ",random.choices(ar0list,k=7))
+#WITHOUT REPLACEMENT
+random.seed(2)
+print ("choosing 7 random items from a sequence without replacement ",random.sample(ar0list,k=7))
+
+
+```
+
